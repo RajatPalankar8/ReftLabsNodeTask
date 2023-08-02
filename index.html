@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Chat</title>
+</head>
+<body>
+  <div>
+    <h1>WebSocket Chat</h1>
+    <div>
+      <input type="text" id="messageInput" placeholder="Enter your message">
+      <button id="sendButton">Send</button>
+    </div>
+    <div id="chatMessages"></div>
+  </div>
+
+  <script>
+    const socket = new WebSocket('ws://localhost:3000'); // Replace with the actual WebSocket server URL
+
+    socket.addEventListener('open', (event) => {
+      console.log('WebSocket connection opened');
+    });
+
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      displayMessage(data.sender, data.content);
+    });
+
+    socket.addEventListener('close', (event) => {
+      console.log('WebSocket connection closed');
+    });
+
+    document.getElementById('sendButton').addEventListener('click', () => {
+      const message = document.getElementById('messageInput').value;
+      if (message.trim() !== '') {
+        sendMessage(message);
+        document.getElementById('messageInput').value = '';
+      }
+    });
+
+    function sendMessage(message) {
+      const payload = {
+        content: message,
+      };
+      socket.send(JSON.stringify(payload));
+    }
+
+    function displayMessage(sender, content) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.textContent = `${sender}: ${content}`;
+      chatMessages.appendChild(messageDiv);
+    }
+  </script>
+</body>
+</html>

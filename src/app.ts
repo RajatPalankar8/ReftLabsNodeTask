@@ -7,16 +7,39 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { resourceRouter } from './controllers/resource.controller';
+import { TodoRouter } from './controllers/resource.controller';
 import jwt from 'jsonwebtoken';
-import { SocketUser } from './models/user.model'; 
+import { createServer } from 'http'; // Import the 'http' module to create a server
+import { Server } from 'socket.io';
 const app = express();
 
-import { Server as HttpServer } from 'http';
-import { Server, Socket } from 'socket.io'; 
-import { Resource } from './models/resource.model';
-
 const SECRET_KEY = 'your_secret_key';
+
+// Create an HTTP server using the Express app
+const server = createServer(app);
+
+// Create a WebSocket server
+const io = new Server(server);
+
+
+io.on('connection', (socket) => {
+  console.log('A client connected:', socket.id);
+
+  // Handle WebSocket events here
+
+  // Example: Sending a message from the server to the client
+  socket.emit('message', 'Welcome to the WebSocket server!');
+
+  // Example: Receiving a message from the client
+  socket.on('clientMessage', (data) => {
+    console.log('Received message from client:', data);
+  });
+
+  // Disconnect event
+  socket.on('disconnect', () => {
+    console.log('A client disconnected:', socket.id);
+  });
+});
 
 // Middleware
 app.use(cors());
@@ -46,7 +69,7 @@ const users = [
 
 
 // Login route to generate JWT token
-app.post('/auth/login', (req, res) => {
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     // Find the user based on username and password (replace with your actual authentication logic)
@@ -65,64 +88,10 @@ app.post('/auth/login', (req, res) => {
 
 
 // Routes
-app.use('/api/resource', resourceRouter);
+app.use('/api', TodoRouter);
 
-// Error handling middleware
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).json({ message: 'Internal Server Error' });
-// });
-
-function authenticateSocket(socket: Socket, next: (err?: Error) => void) {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Unauthorized'));
-    }
-  
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-      if (err) {
-        return next(new Error('Forbidden'));
-      }
-  
-      const user: SocketUser = decoded as SocketUser;
-      socket.user = user;
-      next();
-    });
-  }
-
-// Create HTTP server
-const httpServer = new HttpServer(app)
-// Create Socket.IO server
-const io = new Server(httpServer, {
-    cors: {
-      origin: '*', // Update this with your allowed origins
-    },
-  });
-
-// Socket.IO authentication middleware
-io.use(authenticateSocket);
-
-// Socket.IO connection handler
-// Socket.IO connection handler
-io.on('connection', (socket) => {
-    console.log('A client connected:', socket.id);
-  
-    // Join a room based on user ID (optional, customize as needed)
-    if (socket.user && socket.user.id) {
-      socket.join(`user_${socket.user.id}`);
-    }
-  
-    // Broadcast messages to clients
-    // You can customize this based on your use case
-    // ...
-  
-    // Disconnect handler (optional, customize as needed)
-    socket.on('disconnect', () => {
-      console.log('A client disconnected:', socket.id);
-    });
-  });
 
 const PORT = 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
