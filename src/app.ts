@@ -7,39 +7,37 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { TodoRouter } from './controllers/resource.controller';
+import { TodoRouter } from './controllers/todo.controller';
 import jwt from 'jsonwebtoken';
 import { createServer } from 'http'; // Import the 'http' module to create a server
 import { Server } from 'socket.io';
 const app = express();
-
+import { authenticateJWT } from '../src/middlewares/auth.middleware';
 const SECRET_KEY = 'your_secret_key';
 
 // Create an HTTP server using the Express app
 const server = createServer(app);
-
-// Create a WebSocket server
-const io = new Server(server);
+const WebSocket = require('ws');
 
 
-io.on('connection', (socket) => {
-  console.log('A client connected:', socket.id);
+const wss = new WebSocket.Server({ server:server });
 
-  // Handle WebSocket events here
+wss.on('connection',function connection(ws: { send: (arg0: string) => void; on: (arg0: string, arg1: (message: any) => void) => void; }) {
+  console.log('A new client Connected!');
+  ws.send('Welcome New Client!');
 
-  // Example: Sending a message from the server to the client
-  socket.emit('message', 'Welcome to the WebSocket server!');
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
 
-  // Example: Receiving a message from the client
-  socket.on('clientMessage', (data) => {
-    console.log('Received message from client:', data);
-  });
-
-  // Disconnect event
-  socket.on('disconnect', () => {
-    console.log('A client disconnected:', socket.id);
+    wss.clients.forEach(function each(client: { readyState?: any; send: any; on?: (arg0: string, arg1: (message: any) => void) => void; }) {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+    
   });
 });
+
 
 // Middleware
 app.use(cors());
@@ -50,7 +48,7 @@ app.use(morgan('dev'));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Connect to MongoDB
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/your_db_name';
+const MONGODB_URI = 'mongodb://127.0.0.1:27017/RaftLabsTask';
 
 mongoose
     .connect(MONGODB_URI, {})

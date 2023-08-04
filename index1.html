@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket Thing1</title>
+</head>
+<body>
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <div>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Make sure to include the Axios library in the script tag -->
+
+    <script>
+        // Create WebSocket connection.
+        const socket = new WebSocket('ws://localhost:3000');
+
+        // Connection opened
+        socket.addEventListener('open', function (event) {
+            console.log('Connected to WS Server')
+        });
+
+        // Listen for messages
+        socket.addEventListener('message', function (event) {
+            console.log('Message from server ', event.data);
+        });
+
+        // Moved login function outside the scope to make it global
+        const login = async () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // Make an Axios POST request to the backend API to get the JWT token
+                const response = await axios.post('http://localhost:3000/login', { username, password });
+
+                // Assuming the server responds with a JWT token in the 'token' property
+                const jwtToken = response.data.token;
+
+                // Save the JWT token in the session storage for further use.
+                sessionStorage.setItem('jwtToken', jwtToken);
+
+                // Optionally, you can close the login form or redirect the user to another page.
+                // For this example, we'll just log a message to the console.
+                console.log('Logged in successfully! JWT token saved in session.');
+            } catch (error) {
+                // Handle any errors that occurred during the login process
+                console.error('Login failed. Error:', error.message);
+            }
+        }
+
+        const sendMessage = () => {
+            // Retrieve the JWT token from the session storage for authenticated requests.
+            const jwtToken = sessionStorage.getItem('jwtToken');
+
+            // Perform any actions that require authentication with the JWT token.
+            if (jwtToken) {
+                // Perform authenticated actions here, for example:
+                // socket.send('Authenticated message', jwtToken);
+            } else {
+                console.log('User not authenticated. Please login first.');
+            }
+        }
+    </script>
+</body>
+</html>

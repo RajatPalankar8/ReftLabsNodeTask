@@ -11,28 +11,25 @@ const helmet_1 = __importDefault(require("helmet"));
 const compression_1 = __importDefault(require("compression"));
 const morgan_1 = __importDefault(require("morgan"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const resource_controller_1 = require("./controllers/resource.controller");
+const todo_controller_1 = require("./controllers/todo.controller");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const http_1 = require("http"); // Import the 'http' module to create a server
-const socket_io_1 = require("socket.io");
 const app = (0, express_1.default)();
 const SECRET_KEY = 'your_secret_key';
 // Create an HTTP server using the Express app
 const server = (0, http_1.createServer)(app);
-// Create a WebSocket server
-const io = new socket_io_1.Server(server);
-io.on('connection', (socket) => {
-    console.log('A client connected:', socket.id);
-    // Handle WebSocket events here
-    // Example: Sending a message from the server to the client
-    socket.emit('message', 'Welcome to the WebSocket server!');
-    // Example: Receiving a message from the client
-    socket.on('clientMessage', (data) => {
-        console.log('Received message from client:', data);
-    });
-    // Disconnect event
-    socket.on('disconnect', () => {
-        console.log('A client disconnected:', socket.id);
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ server: server });
+wss.on('connection', function connection(ws) {
+    console.log('A new client Connected!');
+    ws.send('Welcome New Client!');
+    ws.on('message', function incoming(message) {
+        console.log('received: %s', message);
+        wss.clients.forEach(function each(client) {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(message);
+            }
+        });
     });
 });
 // Middleware
@@ -43,7 +40,7 @@ app.use(express_1.default.json());
 app.use((0, morgan_1.default)('dev'));
 app.use((0, express_rate_limit_1.default)({ windowMs: 15 * 60 * 1000, max: 100 }));
 // Connect to MongoDB
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/your_db_name';
+const MONGODB_URI = 'mongodb://127.0.0.1:27017/RaftLabsTask';
 mongoose_1.default
     .connect(MONGODB_URI, {})
     .then(() => {
@@ -69,7 +66,7 @@ app.post('/login', (req, res) => {
     res.json({ token });
 });
 // Routes
-app.use('/api', resource_controller_1.TodoRouter);
+app.use('/api', todo_controller_1.TodoRouter);
 const PORT = 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
