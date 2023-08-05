@@ -48,9 +48,9 @@ TodoRouter.put('/:id', async (req: Request, res: Response) => {
   try {
     // Your Todo update logic here
     const TodoId = req.params.id;
-    const { name, description } = req.body;
+    const { todo, description } = req.body;
 
-    const todoRes = await Todo.findByIdAndUpdate(TodoId, { name, description }, { new: true });
+    const todoRes = await Todo.findByIdAndUpdate(TodoId, { todo, description }, { new: true });
 
     if (!todoRes) {
       return res.status(404).json({ message: 'Todo not found' });

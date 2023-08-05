@@ -18,6 +18,9 @@
         <button onclick="login()">Login</button>
     </div>
 
+    Client1
+    <button onclick="sendMessage()">Send Msg</button>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <!-- Make sure to include the Axios library in the script tag -->
 
@@ -67,8 +70,9 @@
             if (jwtToken) {
                 // Perform authenticated actions here, for example:
                 // socket.send('Authenticated message', jwtToken);
+                socket.send('Hello From Client1!');
             } else {
-                console.log('User not authenticated. Please login first.');
+                alert("you need to login first");
             }
         }
     </script>

@@ -56,8 +56,8 @@ TodoRouter.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         // Your Todo update logic here
         const TodoId = req.params.id;
-        const { name, description } = req.body;
-        const todoRes = yield Todo_model_1.Todo.findByIdAndUpdate(TodoId, { name, description }, { new: true });
+        const { todo, description } = req.body;
+        const todoRes = yield Todo_model_1.Todo.findByIdAndUpdate(TodoId, { todo, description }, { new: true });
         if (!todoRes) {
             return res.status(404).json({ message: 'Todo not found' });
         }
